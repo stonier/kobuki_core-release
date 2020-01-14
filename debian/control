@@ -1,0 +1,13 @@
+Source: ros-eloquent-kobuki-driver
+Section: misc
+Priority: optional
+Maintainer: Daniel Stonier <d.stonier@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-eloquent-ament-cmake-ros, ros-eloquent-ecl-build, ros-eloquent-ecl-command-line, ros-eloquent-ecl-config, ros-eloquent-ecl-converters, ros-eloquent-ecl-devices, ros-eloquent-ecl-geometry, ros-eloquent-ecl-mobile-robot, ros-eloquent-ecl-sigslots, ros-eloquent-ecl-threads, ros-eloquent-ecl-time, ros-eloquent-ros-workspace
+Homepage: https://index.ros.org/k/kobuki_driver/github-kobuki-base-kobuki_driver
+Standards-Version: 3.9.2
+
+Package: ros-eloquent-kobuki-driver
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-eloquent-ecl-command-line, ros-eloquent-ecl-config, ros-eloquent-ecl-converters, ros-eloquent-ecl-devices, ros-eloquent-ecl-geometry, ros-eloquent-ecl-mobile-robot, ros-eloquent-ecl-sigslots, ros-eloquent-ecl-threads, ros-eloquent-ecl-time, ros-eloquent-ros-workspace
+Description: C++ driver library for Kobuki: Pure C++ driver library for Kobuki.
+ This is for those who do not wish to use ROS on their systems.
