@@ -1,0 +1,13 @@
+Source: ros-eloquent-kobuki-dock-drive
+Section: misc
+Priority: optional
+Maintainer: Daniel Stonier <d.stonier@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-eloquent-ament-cmake-ros, ros-eloquent-ecl-build, ros-eloquent-ecl-geometry, ros-eloquent-ecl-linear-algebra, ros-eloquent-ecl-threads, ros-eloquent-ros-workspace
+Homepage: https://index.ros.org/k/kobuki_dock_drive/github-kobuki-base-kobuki_dock_drive
+Standards-Version: 3.9.2
+
+Package: ros-eloquent-kobuki-dock-drive
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-eloquent-ecl-geometry, ros-eloquent-ecl-linear-algebra, ros-eloquent-ecl-threads, ros-eloquent-ros-workspace
+Description: Dock driving library for Kobuki.
+ Users owning a docking station for Kobuki can use this tool to develop autonomous docking drive algorithms.
