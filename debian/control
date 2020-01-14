@@ -1,0 +1,12 @@
+Source: ros-eloquent-kobuki-core
+Section: misc
+Priority: optional
+Maintainer: Daniel Stonier <d.stonier@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-eloquent-ament-cmake, ros-eloquent-ros-workspace
+Homepage: https://index.ros.org/k/kobuki_core/github-kobuki-base-kobuki_core
+Standards-Version: 3.9.2
+
+Package: ros-eloquent-kobuki-core
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-eloquent-kobuki-dock-drive, ros-eloquent-kobuki-driver, ros-eloquent-ros-workspace
+Description: Non-ROS software for Kobuki, Yujin Robot's mobile research base.
