@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>kobuki_driver</name>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <description>
     C++ driver library for Kobuki:
     Pure C++ driver library for Kobuki. This is for those who do not wish to use ROS on their systems.
@@ -13,7 +13,7 @@
   <license>BSD</license>
   <url type="bugtracker">https://github.com/kobuki-base/kobuki_core/issues</url>
   <url type="repository">https://github.com/kobuki-base/kobuki_core</url>
-  <url type="website">https://index.ros.org/k/kobuki_driver/github-kobuki-base-kobuki_driver</url>
+  <url type="website">https://index.ros.org/p/kobuki_driver/github-kobuki-base-kobuki_core/</url>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 

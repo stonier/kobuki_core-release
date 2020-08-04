@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>kobuki_dock_drive</name>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <description>
 	    Dock driving library for Kobuki. Users owning a docking station for Kobuki
 	    can use this tool to develop autonomous docking drive algorithms.
@@ -12,7 +12,7 @@
   <license>BSD</license>
   <url type="bugtracker">https://github.com/kobuki-base/kobuki_core/issues</url>
   <url type="repository">https://github.com/kobuki-base/kobuki_core</url>
-  <url type="website">https://index.ros.org/k/kobuki_dock_drive/github-kobuki-base-kobuki_dock_drive</url>
+  <url type="website">https://index.ros.org/p/kobuki_dock_drive/github-kobuki-base-kobuki_core/</url>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
