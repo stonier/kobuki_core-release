@@ -6,9 +6,15 @@ Forthcoming
 -----------
 * ...
 
+1.1.1 (2020-08-19)
+------------------
+* [udev] bugfix low latency ftdi operation, `#28 <https://github.com/kobuki-base/kobuki_core/pull/28>`_.
+* [demos] added an event demo, also minor cleanup, `#27 <https://github.com/kobuki-base/kobuki_core/pull/27>`_.
+* [infra] don't use system headers for dependencies, `#27 <https://github.com/kobuki-base/kobuki_core/pull/27>`_.
+
 1.1.0 (2020-08-04)
 ------------------
-* [infra] ament_export_interfaces -> ament_export_targets
+* [infra] ament_export_interfaces -> ament_export_targets, `#21 <https://github.com/kobuki-base/kobuki_core/pull/21>`_.
 * [driver] bugfix correct size for pyaload length lookup, #19 <https://github.com/kobuki-base/kobuki_core/pull/19>`_.
 * [infra] license links updated, `#15 <https://github.com/kobuki-base/kobuki_core/pull/15>`_.
 
