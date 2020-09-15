@@ -1,0 +1,12 @@
+Source: ros-foxy-kobuki-core
+Section: misc
+Priority: optional
+Maintainer: Daniel Stonier <d.stonier@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-foxy-ament-cmake-ros, ros-foxy-ecl-build, ros-foxy-ecl-command-line, ros-foxy-ecl-config, ros-foxy-ecl-console, ros-foxy-ecl-converters, ros-foxy-ecl-devices, ros-foxy-ecl-geometry, ros-foxy-ecl-mobile-robot, ros-foxy-ecl-sigslots, ros-foxy-ecl-threads, ros-foxy-ecl-time, ros-foxy-ros-workspace
+Homepage: https://kobuki.readthedocs.io/en/release-1.0.x/
+Standards-Version: 3.9.2
+
+Package: ros-foxy-kobuki-core
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-foxy-ecl-command-line, ros-foxy-ecl-config, ros-foxy-ecl-console, ros-foxy-ecl-converters, ros-foxy-ecl-devices, ros-foxy-ecl-geometry, ros-foxy-ecl-mobile-robot, ros-foxy-ecl-sigslots, ros-foxy-ecl-threads, ros-foxy-ecl-time, ros-foxy-ros-workspace
+Description: Pure C++ driver library for Kobuki.
