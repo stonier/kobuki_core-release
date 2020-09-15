@@ -6,9 +6,19 @@ Forthcoming
 -----------
 * ...
 
+1.3.1 (2020-09-15)
+------------------
+* [keyop] protect command variables with a mutex, `#41 <https://github.com/kobuki-base/kobuki_core/issues/41>`_
+* [core] ros_ prefixes dropped, custom_logging & raw_data_stream demos, `#40 <https://github.com/kobuki-base/kobuki_core/issues/40>`_
+* [infra] recommended firmware versions 1.1.4, 1.2.0, `#37 <https://github.com/kobuki-base/kobuki_core/issues/37>`_
+
+1.3.0 (2020-09-12)
+------------------
+* [all] LegacyPose2D -> Vector3d, `#36 <https://github.com/kobuki-base/kobuki_core/issues/36>`_
+
 1.2.0 (2020-08-30)
 ------------------
-* [infra] kobuki_dock_drive and kobuki_driver merged into kobuki_core, `#31 <https://github.com/kobuki-base/kobuki_core/issues/31>`_.
+* [infra] kobuki_dock_drive and kobuki_driver merged into kobuki_core, `#31 <https://github.com/kobuki-base/kobuki_core/issues/31>`_
 * [tools] kobuki_simple_keyop -> kobuki-simple-keyop, `#35 <https://github.com/kobuki-base/kobuki_core/issues/35>`_.
 * [tools] kobuki_version_info -> kobuki-version-info, `#35 <https://github.com/kobuki-base/kobuki_core/issues/35>`_.
 
