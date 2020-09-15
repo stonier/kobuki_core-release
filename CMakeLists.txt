@@ -18,6 +18,7 @@ find_package(ament_cmake_ros REQUIRED)
 find_package(ecl_build REQUIRED)
 find_package(ecl_command_line REQUIRED)
 find_package(ecl_config REQUIRED)
+find_package(ecl_console REQUIRED)
 find_package(ecl_converters REQUIRED)
 find_package(ecl_devices REQUIRED)
 find_package(ecl_geometry REQUIRED)
@@ -48,6 +49,7 @@ add_subdirectory(src)
 ament_export_targets(${PROJECT_NAME})
 ament_export_dependencies(
     ecl_config
+    ecl_console
     ecl_converters
     ecl_devices
     ecl_geometry

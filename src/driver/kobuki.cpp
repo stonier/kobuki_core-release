@@ -11,6 +11,8 @@
  *****************************************************************************/
 
 #include <cmath>
+#include <stdexcept>
+
 #include <ecl/math.hpp>
 #include <ecl/geometry/angle.hpp>
 #include <ecl/time/sleep.hpp>
@@ -18,8 +20,9 @@
 #include <ecl/sigslots.hpp>
 #include <ecl/geometry/angle.hpp>
 #include <ecl/time/timestamp.hpp>
-#include <stdexcept>
+
 #include "../../include/kobuki_core/kobuki.hpp"
+#include "../../include/kobuki_core/logging.hpp"
 #include "../../include/kobuki_core/packet_handler/payload_headers.hpp"
 
 /*****************************************************************************
@@ -49,14 +52,18 @@ bool PacketFinder::checkSum()
  *****************************************************************************/
 
 Kobuki::Kobuki() :
-    shutdown_requested(false)
-    , is_enabled(false)
-    , heading_offset(0.0/0.0)
-    , is_connected(false)
-    , is_alive(false)
-    , version_info_reminder(0)
-    , controller_info_reminder(0)
-    , velocity_commands_debug(4, 0)
+  shutdown_requested(false),
+  is_enabled(false),
+  heading_offset(0.0/0.0),
+  is_connected(false),
+  is_alive(false),
+  version_info_reminder(0),
+  controller_info_reminder(0),
+  velocity_commands_debug(4, 0),
+  slot_log_debug(logDebug),
+  slot_log_info(logInfo),
+  slot_log_warning(logWarning),
+  slot_log_error(logError)
 {
 }
 
@@ -68,7 +75,7 @@ Kobuki::~Kobuki()
   disable();
   shutdown_requested = true; // thread's spin() will catch this and terminate
   thread.join();
-  sig_debug.emit("Device: kobuki driver terminated.");
+  sig_debug.emit("Kobuki driver destructed.");
 }
 
 void Kobuki::init(Parameters &parameters)
@@ -91,14 +98,31 @@ void Kobuki::init(Parameters &parameters)
   sig_raw_control_command.connect(sigslots_namespace + std::string("/raw_control_command"));
   //sig_serial_timeout.connect(sigslots_namespace+std::string("/serial_timeout"));
 
-  sig_debug.connect(sigslots_namespace + std::string("/ros_debug"));
-  sig_info.connect(sigslots_namespace + std::string("/ros_info"));
-  sig_warn.connect(sigslots_namespace + std::string("/ros_warn"));
-  sig_error.connect(sigslots_namespace + std::string("/ros_error"));
-  sig_named.connect(sigslots_namespace + std::string("/ros_named"));
+  sig_debug.connect(sigslots_namespace + std::string("/debug"));
+  sig_info.connect(sigslots_namespace + std::string("/info"));
+  sig_warn.connect(sigslots_namespace + std::string("/warning"));
+  sig_error.connect(sigslots_namespace + std::string("/error"));
+
+  switch(this->parameters.log_level) {
+    case LogLevel::DEBUG:
+      slot_log_debug.connect(parameters.sigslots_namespace + "/debug");
+      [[fallthrough]];
+    case LogLevel::INFO:
+      slot_log_info.connect(parameters.sigslots_namespace + "/info");
+      [[fallthrough]];
+    case LogLevel::WARNING:
+      slot_log_warning.connect(parameters.sigslots_namespace + "/warning");
+      [[fallthrough]];
+    case LogLevel::ERROR:
+      slot_log_error.connect(parameters.sigslots_namespace + "/error");
+      break;
+    default:
+      break;
+  }
 
   try {
     serial.open(parameters.device_port, ecl::BaudRate_115200, ecl::DataBits_8, ecl::StopBits_1, ecl::NoParity);  // this will throw exceptions - NotFoundError, OpenError
+    sig_debug.emit("Serial connection opened.");
     is_connected = true;
     serial.block(4000); // blocks by default, but just to be clear!
   }
@@ -225,19 +249,18 @@ void Kobuki::spin()
         is_alive = false;
         version_info_reminder = 10;
         controller_info_reminder = 10;
-        sig_debug.emit("Timed out while waiting for incoming bytes.");
+        sig_warn.emit("Timed out while waiting for incoming bytes.");
       }
       event_manager.update(is_connected, is_alive);
       continue;
     }
     else
     {
-      std::ostringstream ostream;
-      ostream << "kobuki_node : serial_read(" << n << ")"
-        << ", packet_finder.numberOfDataToRead(" << packet_finder.numberOfDataToRead() << ")";
-      //sig_debug.emit(ostream.str());
-      sig_named.emit(log("debug", "serial", ostream.str()));
-      // might be useful to send this to a topic if there is subscribers
+      // too much noise, even for debug
+      // std::ostringstream ostream;
+      // ostream << "serial_read(" << n << ")"
+      //   << ", packet_finder.numberOfDataToRead(" << packet_finder.numberOfDataToRead() << ")";
+      // sig_debug.emit(ostream.str());
     }
 
     if (packet_finder.update(buf, n)) // this clears packet finder's buffer and transfers important bytes into it
@@ -296,30 +319,42 @@ void Kobuki::spin()
             try
             {
               // Check firmware/driver compatibility; major version must be the same
-              int version_match = firmware.check_major_version();
+              int version_match = firmware.checkMajorVersion();
               if (version_match < 0) {
-                sig_error.emit("Robot firmware is outdated and needs to be upgraded (hint: " \
-                               "https://kobuki.readthedocs.io/en/devel/firmware.html)");
-                sig_error.emit("Robot firmware version is " + VersionInfo::toString(firmware.data.version)
-                             + "; latest version is " + firmware.current_version());
+                sig_error.emit("This software is incompatible with Kobuki's firmware.");
+                sig_error.emit("You need to upgrade your firmware. For more information,");
+                sig_error.emit("refer to https://kobuki.readthedocs.io/en/devel/firmware.html.");
+                sig_error.emit(" - Firmware Version: " + VersionInfo::toString(firmware.version()));
+                sig_error.emit(" - Recommended Versions: " + VersionInfo::toString(firmware.RECOMMENDED_VERSIONS));
                 shutdown_requested = true;
+                sig_error.emit("Kobuki shutting down.");
               }
               else if (version_match > 0) {
-                sig_error.emit("Driver version isn't not compatible with robot firmware. Please upgrade driver");
+                sig_error.emit("This software is incompatible with Kobuki's firmware.");
+                sig_error.emit("You need to upgrade your software. For more information,");
+                sig_error.emit("refer to https://kobuki.readthedocs.io/en/devel/firmware.html.");
+                sig_error.emit(" - Firmware Version: " + VersionInfo::toString(firmware.version()));
+                sig_error.emit(" - Recommended Versions: " + VersionInfo::toString(firmware.RECOMMENDED_VERSIONS));
                 shutdown_requested = true;
+                sig_error.emit("Kobuki shutting down.");
               }
               else
               {
                 // And minor version don't need to, but just make a suggestion
-                version_match = firmware.check_minor_version();
+                version_match = firmware.checkRecommendedVersion();
                 if (version_match < 0) {
-                  sig_warn.emit("Robot firmware is outdated; we suggest you to upgrade it (hint: " \
-                                "https://kobuki.readthedocs.io/en/devel/firmware.html)");
-                  sig_warn.emit("Robot firmware version is " + VersionInfo::toString(firmware.data.version)
-                              + "; latest version is " + firmware.current_version());
+                  sig_warn.emit("The firmware does not match any of the recommended versions for this software.");
+                  sig_warn.emit("Consider replacing the firmware. For more information,");
+                  sig_warn.emit("refer to https://kobuki.readthedocs.io/en/devel/firmware.html.");
+                  sig_warn.emit(" - Firmware Version: " + VersionInfo::toString(firmware.version()));
+                  sig_warn.emit(" - Recommended Versions: " + VersionInfo::toString(firmware.RECOMMENDED_VERSIONS));
                 }
                 else if (version_match > 0) {
-                  // Driver version is outdated; maybe we should also suggest to upgrade it, but this is not a typical case
+                  sig_warn.emit("This software is significantly behind the latest firmware.");
+                  sig_warn.emit("Please upgrade your software. For more information,");
+                  sig_warn.emit("refer to https://kobuki.readthedocs.io/en/devel/firmware.html.");
+                  sig_warn.emit(" - Firmware Version: " + VersionInfo::toString(firmware.version()));
+                  sig_warn.emit(" - Recommended Versions: " + VersionInfo::toString(firmware.RECOMMENDED_VERSIONS));
                 }
               }
             }
@@ -332,10 +367,10 @@ void Kobuki::spin()
             break;
           case Header::UniqueDeviceID:
             if( !unique_device_id.deserialise(data_buffer) ) { fixPayload(data_buffer); break; }
-            sig_version_info.emit( VersionInfo( firmware.data.version, hardware.data.version
+            sig_version_info.emit( VersionInfo( firmware.version(), hardware.data.version
                 , unique_device_id.data.udid0, unique_device_id.data.udid1, unique_device_id.data.udid2 ));
             sig_info.emit("Version info - Hardware: " + VersionInfo::toString(hardware.data.version)
-                                     + ". Firmware: " + VersionInfo::toString(firmware.data.version));
+                                     + ". Firmware: " + VersionInfo::toString(firmware.version()));
             version_info_reminder = 0;
             break;
           case Header::ControllerInfo:
@@ -351,7 +386,10 @@ void Kobuki::spin()
       //std::cout << "---" << std::endl;
       unlockDataAccess();
 
-      is_alive = true;
+      if ( !is_alive ) {
+        sig_debug.emit("First data received.");
+        is_alive = true;
+      }
       event_manager.update(is_connected, is_alive);
       last_signal_time.stamp();
       sig_stream_data.emit();
@@ -369,13 +407,12 @@ void Kobuki::spin()
       }
     }
   }
-  sig_error.emit("Driver worker thread shutdown!");
 }
 
 void Kobuki::fixPayload(ecl::PushAndPop<unsigned char> & byteStream)
 {
   if (byteStream.size() < 3 ) { /* minimum size of sub-payload is 3; header_id, length, data */
-    sig_named.emit(log("error", "packet", "too small sub-payload detected."));
+    sig_error.emit("too small sub-payload detected.");
     byteStream.clear();
   } else {
     std::stringstream ostream;
@@ -401,8 +438,8 @@ void Kobuki::fixPayload(ecl::PushAndPop<unsigned char> & byteStream)
     }
     ostream << "]";
 
-    if (remains < length) sig_named.emit(log("error", "packet", "malformed sub-payload detected. "  + ostream.str()));
-    else                  sig_named.emit(log("debug", "packet", "unknown sub-payload detected. " + ostream.str()));
+    if (remains < length) sig_error.emit("Malformed sub-payload detected. "  + ostream.str());
+    else                  sig_debug.emit("Unknown sub-payload detected. " + ostream.str());
   }
 }
 
@@ -454,10 +491,17 @@ void Kobuki::getWheelJointStates(double &wheel_left_angle, double &wheel_left_an
  * @param pose_update : return the pose updates in this variable.
  * @param pose_update_rates : return the pose update rates in this variable.
  */
-void Kobuki::updateOdometry(ecl::LegacyPose2D<double> &pose_update, ecl::linear_algebra::Vector3d &pose_update_rates)
+void Kobuki::updateOdometry(
+    ecl::linear_algebra::Vector3d &pose_update,
+    ecl::linear_algebra::Vector3d &pose_update_rates)
 {
-  diff_drive.update(core_sensors.data.time_stamp, core_sensors.data.left_encoder, core_sensors.data.right_encoder,
-                      pose_update, pose_update_rates);
+  diff_drive.update(
+      core_sensors.data.time_stamp,
+      core_sensors.data.left_encoder,
+      core_sensors.data.right_encoder,
+      pose_update,
+      pose_update_rates
+  );
 }
 
 /*****************************************************************************
@@ -490,11 +534,11 @@ void Kobuki::playSoundSequence(const enum SoundSequences &number)
 bool Kobuki::setControllerGain(const unsigned char &type, const unsigned int &p_gain,
                                const unsigned int &i_gain, const unsigned int &d_gain)
 {
-  if ((firmware.flashed_major_version() < 2) && (firmware.flashed_minor_version() < 2)) {
-    sig_warn.emit("Robot firmware doesn't support this function, so you must upgrade it. " \
-                  "Consult how-to on: http://kobuki.yujinrobot.com/home-en/documentation/howtos/upgrading-firmware");
-    sig_warn.emit("Robot firmware version is " + VersionInfo::toString(firmware.data.version)
-                + "; latest version is " + firmware.current_version());
+  if ((firmware.majorVersion() < 2) && (firmware.minorVersion() < 2)) {
+    sig_warn.emit("Your robot firmware will need to be upgraded to get/set of PID gains." \
+                  "Refer to https://kobuki.readthedocs.io/en/devel/firmware.html.");
+    sig_warn.emit("Robot firmware version is " + VersionInfo::toString(firmware.version())
+                + ". You will need at least 1.2.x");
     return false;
   }
 
@@ -504,11 +548,11 @@ bool Kobuki::setControllerGain(const unsigned char &type, const unsigned int &p_
 
 bool Kobuki::getControllerGain()
 {
-  if ((firmware.flashed_major_version() < 2) && (firmware.flashed_minor_version() < 2)) {
-    sig_warn.emit("Robot firmware doesn't support this function, so you must upgrade it. " \
-                  "Consult how-to on: http://kobuki.yujinrobot.com/home-en/documentation/howtos/upgrading-firmware");
-    sig_warn.emit("Robot firmware version is " + VersionInfo::toString(firmware.data.version)
-                + "; latest version is " + firmware.current_version());
+  if ((firmware.majorVersion() < 2) && (firmware.minorVersion() < 2)) {
+    sig_warn.emit("Your robot firmware will need to be upgraded to get/set PID gains." \
+                  "Refer to https://kobuki.readthedocs.io/en/devel/firmware.html.");
+    sig_warn.emit("Robot firmware version is " + VersionInfo::toString(firmware.version())
+                + ". You will need at least 1.2.x");
     return false;
   }
 
@@ -555,9 +599,8 @@ void Kobuki::sendCommand(Command command)
 {
   if( !is_alive || !is_connected ) {
     //need to do something
-    sig_debug.emit("Device state is not ready yet.");
-    if( !is_alive     ) sig_debug.emit(" - Device is not alive.");
-    if( !is_connected ) sig_debug.emit(" - Device is not connected.");
+    if( !is_alive     ) sig_debug.emit("Serial connection opened, but not yet receiving data.");
+    if( !is_connected ) sig_debug.emit("Serial connection not open.");
     //std::cout << is_enabled << ", " << is_alive << ", " << is_connected << std::endl;
     return;
   }

@@ -24,8 +24,10 @@
 #include <ecl/devices.hpp>
 #include <ecl/threads/mutex.hpp>
 #include <ecl/exceptions/standard_exception.hpp>
-#include <ecl/geometry/legacy_pose2d.hpp>
+#include <ecl/geometry.hpp>
 #include "version_info.hpp"
+
+#include "logging.hpp"
 #include "parameters.hpp"
 #include "event_manager.hpp"
 #include "command.hpp"
@@ -54,7 +56,6 @@
 
 namespace kobuki
 {
-
 /*****************************************************************************
  ** Definitions
  *****************************************************************************/
@@ -87,6 +88,9 @@ public:
 class kobuki_PUBLIC Kobuki
 {
 public:
+  /*********************
+   ** C&D
+   **********************/
   Kobuki();
   ~Kobuki();
 
@@ -120,7 +124,7 @@ public:
    * around any getXXX calls - see the doxygen notes for lockDataAccess. */
   ecl::Angle<double> getHeading() const;
   double getAngularVelocity() const;
-  VersionInfo versionInfo() const { return VersionInfo(firmware.data.version, hardware.data.version, unique_device_id.data.udid0, unique_device_id.data.udid1, unique_device_id.data.udid2); }
+  VersionInfo versionInfo() const { return VersionInfo(firmware.version(), hardware.data.version, unique_device_id.data.udid0, unique_device_id.data.udid1, unique_device_id.data.udid2); }
   Battery batteryStatus() const { return Battery(core_sensors.data.battery, core_sensors.data.charger); }
 
   /******************************************
@@ -142,7 +146,7 @@ public:
   **********************/
   void getWheelJointStates(double &wheel_left_angle, double &wheel_left_angle_rate,
                            double &wheel_right_angle, double &wheel_right_angle_rate);
-  void updateOdometry(ecl::LegacyPose2D<double> &pose_update,
+  void updateOdometry(ecl::linear_algebra::Vector3d &pose_update,
                       ecl::linear_algebra::Vector3d &pose_update_rates);
 
   /*********************
@@ -257,10 +261,15 @@ private:
   ecl::Signal<> sig_stream_data, sig_controller_info;
   ecl::Signal<const VersionInfo&> sig_version_info;
   ecl::Signal<const std::string&> sig_debug, sig_info, sig_warn, sig_error;
-  ecl::Signal<const std::vector<std::string>&> sig_named;
   ecl::Signal<Command::Buffer&> sig_raw_data_command; // should be const, but pushnpop is not fully realised yet for const args in the formatters.
   ecl::Signal<PacketFinder::BufferType&> sig_raw_data_stream; // should be const, but pushnpop is not fully realised yet for const args in the formatters.
   ecl::Signal<const std::vector<short>&> sig_raw_control_command;
+
+  /*********************
+  ** Slots
+  **********************/
+  ecl::Slot<const std::string&> slot_log_debug, slot_log_info, slot_log_warning, slot_log_error;
+
 };
 
 } // namespace kobuki
